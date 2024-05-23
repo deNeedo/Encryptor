@@ -1,0 +1,33 @@
+-------------------------------------------------------------------------------------------------------
+Encryptor uses call arguments to determine neccessary information for the encryption/decryption process.
+Below you can see the list of all parameters along with some example calls.
+-------------------------------------------------------------------------------------------------------
+Parameters that can be set by the user:
+-------------------------------------------------------------------------------------------------------
+    -gennew             Tells Encryptor to generate key secret instead of using the old one.
+                        Note that after selecting this option any already encrypted files are
+                        gonna be lost as the information about the old secret gets discarded
+                        in the process of creating the new one.
+-------------------------------------------------------------------------------------------------------
+    -enc                Is there by default. Enables encryption mode.
+                        Only one mode can be active at a single time. Check -dec.
+-------------------------------------------------------------------------------------------------------
+    -dec                Enables decryption mode. Only one mode can be active at a single time.
+                        Check -enc.
+-------------------------------------------------------------------------------------------------------
+    -buffer="VALUE"     In place of VALUE input the integer number to determine how many characters
+                        can be processed at once while encrypting.
+-------------------------------------------------------------------------------------------------------
+    -secret="VALUE"     Determines the path to store/access the secret used for encryption and
+                        decryption. It is required to provide this value.
+                        This file must exist and must not be empty.
+-------------------------------------------------------------------------------------------------------
+    -input="VALUE"      Determines the path to access the input data used for encryption and
+                        decryption. It is required to provide this value.
+                        This file must exist and must not be empty.
+-------------------------------------------------------------------------------------------------------
+    -output="VALUE"     Determines the path to access the input data used for encryption and
+                        decryption. It is required to provide this value.
+-------------------------------------------------------------------------------------------------------
+Example calls:
+-------------------------------------------------------------------------------------------------------
