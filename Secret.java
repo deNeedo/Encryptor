@@ -55,17 +55,15 @@ public class Secret implements Serializable
         catch (Exception e) {}
     }
 
-    public void serialize(String filePath) {
-        try (FileOutputStream file = new FileOutputStream(filePath);
-             ObjectOutputStream writer = new ObjectOutputStream(file)) {
-            writer.writeObject(this);
-        } catch (IOException e) {Logger.error("Serialization failed.");}
+    public void serialize(String filePath)
+    {
+        try (FileOutputStream file = new FileOutputStream(filePath); ObjectOutputStream writer = new ObjectOutputStream(file)) {writer.writeObject(this);}
+        catch (IOException e) {Logger.error("Serialization failed.");}
     }
 
-    public Secret deserialize(String filePath) {
-        try (FileInputStream file = new FileInputStream(filePath);
-             ObjectInputStream reader = new ObjectInputStream(file)) {
-            return (Secret) reader.readObject();
-        } catch (IOException | ClassNotFoundException e) {Logger.error("Deserialization failed."); return null;}
+    public Secret deserialize(String filePath)
+    {
+        try (FileInputStream file = new FileInputStream(filePath); ObjectInputStream reader = new ObjectInputStream(file)) {return (Secret) reader.readObject();}
+        catch (Exception e) {return null;}
     }
 }
