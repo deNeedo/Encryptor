@@ -1,98 +1,122 @@
+/* Necessary imports */
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.Base64;
 import javax.crypto.Cipher;
-
+/* Main class */
 public class Encryptor
 {
-    private final String algorithm = "AES/CBC/PKCS5Padding";
-    private boolean generate = false;
-    private boolean ready = false;
+    /* Encryption/decryption related fields */
+    private int mode = 1;
+    private boolean modeSet = false;
     private int buffer = 16;
-    private Secret secret;
-    private String output;
-    private String input;
-    private String mode;
+    private boolean bufferSet = false;
+    private final String algorithm = "AES/CBC/PKCS5Padding";
     
+    
+    
+    
+    /* Secret related fields */
+    private boolean generated = false;
+    private String secretPath = null;
+    private Secret secret = null;
+    private boolean ready = false;
+    /* I/O related fields */
+    private String input = null;
+    private String output = null;
+    /* Empty constructor (needed to avoid 'serial' keyword) */
     private Encryptor() {}
-
+    /* Method for preparing class variables to work as expected and also to check correctness of user input */
     private boolean init(String[] args)
     {
-        try
+        Logger.info("Encryptor is starting.");
+        for (int m = 0; m < args.length; m++)
         {
-            Logger.info("Encryptor is starting...");
-            for (int m = 0; m < args.length; m++)
+            /* Encryption/decryption related settings */
+            /* -------------------------------------- */
+            if (args[m].equals("-enc"))
             {
-                if (args[m].contains("-buffer="))
-                {
-                    Logger.info("Changing buffer size...");
-                    buffer = Integer.parseInt(args[m].split("=")[1]);
-                }
-                else if (args[m].equals("-gennewkey")) {generate = true;}
-                else if (args[m].contains("-input=")) {this.input = args[m].split("=")[1];}
-                else if (args[m].contains("-output=")) {this.output = args[m].split("=")[1];}
-                else if (args[m].equals("-enc")) {this.mode = "encrypt";}
-                else if (args[m].equals("-dec")) {this.mode = "decrypt";}
+                Logger.info("Setting operation mode to ENCRYPT.");
+                if (this.modeSet) {Logger.error("Error while setting operation mode. Value already set."); return false;}
+                else {this.mode = 1; this.modeSet = true;}
             }
-            Logger.info("The new key is being generated...");
-            this.secret = new Secret();
-            if (this.generate) {secret.serialize("./.secret");}
-            /* check if .serial exists */
-            else {this.secret = secret.deserialize("./.secret");}
-            Logger.info("Checking I/O paths...");
-            File file = new File(this.input); FileReader reader = new FileReader(file); reader.close();
-            file = new File(this.output); FileWriter writer = new FileWriter(file); writer.close();
-            Logger.info("Selecting operation mode...");
-            if (this.mode == null) {int m = 1 / 0; System.out.println(m);}
-            return true;
+            else if (args[m].contains("-buffer="))
+            {
+                Logger.info("Changing buffer size.");
+                try {buffer = Integer.parseInt(args[m].split("=")[1]); this.bufferSet = true;}
+                catch (Exception e) {Logger.error("Error while setting buffer size. Most likely provided value is NOT an integer."); return false;}
+            }
+            else if (args[m].equals("-dec"))
+            {
+                Logger.info("Setting operation mode to DECRYPT.");
+                if (this.modeSet) {Logger.error("Error while setting operation mode. Value already set."); return false;}
+                else {this.mode = 0; this.modeSet = true;}
+            }
+            /* -------------------------------------- */
+            /* Secret related settings */
+            /* ----------------------- */
+            else if (args[m].equals("-gennew")) {Logger.info("Generating new secret."); this.secret = new Secret(); this.generated = true;}
+            else if (args[m].contains("-secret="))
+            {
+                try {Logger.info("Setting path for secret storing."); this.secretPath = args[m].split("=")[1];}
+                catch (Exception e) {Logger.error("Error while setting path for storing secret. Most likely provided value contains non-accessible path in your system."); return false;}
+            }
+            /* ----------------------- */
+            /* I/O related settings */
+            /* -------------------- */
+            else if (args[m].contains("-input="))
+            {
+                try
+                {
+                    Logger.info("Setting path for the input file."); this.input = args[m].split("=")[1];
+                    if (this.input.equals(this.output)) {Logger.error("Input and output cannot point to the same file."); return false;}
+                    File file = new File(this.input); FileReader reader = new FileReader(file);
+                    int data = reader.read(); reader.close(); if (data == -1) {Logger.error("Provided input file is empty."); return false;}
+                }
+                catch (Exception e) {Logger.error("Error while setting path for input file. Most likely provided value contains non-existing path in your system."); return false;}
+            }
+            else if (args[m].contains("-output="))
+            {
+                try
+                {
+                    Logger.info("Setting path for the output file."); this.output = args[m].split("=")[1];
+                    if (this.input.equals(this.output)) {Logger.error("Input and output cannot point to the same file."); return false;}
+                    File file = new File(this.output); FileWriter writer = new FileWriter(file); writer.close();
+                }
+                catch (Exception e) {Logger.error("Error while setting path for output file. Most likely provided value contains non-accessible path in your system."); return false;}
+            }
+            /* -------------------- */
         }
-        catch (Exception e)
+        if (this.input == null) {Logger.error("Missing input file."); return false;}
+        if (this.output == null) {Logger.error("Missing output file."); return false;}
+        if ((this.mode == 0) && (this.bufferSet)) {Logger.warning("Buffer is not being used in DECRYPT mode. No need to change its value.");}
+        if ((this.secretPath == null) && (!this.generated)) {Logger.error("Missing argument with the path for storing/accessing the secret."); return false;}
+        if ((this.secretPath != null) && (!this.generated))
         {
-            Logger.error("App failed to initialize. Make sure to follow the instructions listed below."); this.help();
-            return false;
+            try
+            {
+                File file = new File(this.secretPath); FileReader reader = new FileReader(file);
+                int data = reader.read(); reader.close(); if (data == -1) {Logger.error("Provided input file is empty."); return false;}
+            }
+            catch (Exception e) {Logger.error("Missing file with secret."); return false;}
         }
+        if (this.generated) {Logger.info("Serializing secret object"); this.secret.serialize(this.secretPath);}
+        if (!this.generated)
+        {
+            try {Logger.info("Deserializing secret object"); this.secret = new Secret(); this.secret = this.secret.deserialize(this.secretPath);}
+            catch (Exception e) {Logger.error("Deserialization error. Most likely the file does not contain secret."); return false;}
+        }
+        return true;
     }
-    private void help()
-    {
-        Logger.info("Encryptor uses call arguments to determine neccessary information for the encryption process.");
-        Logger.info("Below you can see the list of Encryptor's parameters along with some example calls.");
-        Logger.info("Arguments that can be set by the user: \n -gennewkey | tells Encryptor to generate key secret instead of using the old one. \n Note that after selecting this option any already encrypted files are gonna be lost as the information about the old secret gets discarded in the process of creating the new secret.");
-    }
-
-    // private void serialize(Secret secret)
-    // {
-    //     try
-    //     {   
-    //         FileOutputStream file = new FileOutputStream("./.secret");
-    //         ObjectOutputStream writer = new ObjectOutputStream(file);
-    //         writer.writeObject(secret); writer.close(); file.close();
-    //     }
-    //     // catch (Exception e) {e.printStackTrace();}
-    //     catch (Exception e) {Logger.error("Unexpected error during serialization process");}
-    // }
-
-    // private Secret deserialize()
-    // {
-    //     try
-    //     {
-    //         System.out.println();
-    //         FileInputStream file = new FileInputStream("./.secret");
-    //         ObjectInputStream reader = new ObjectInputStream(file);
-    //         Secret secret = (Secret) reader.readObject(); reader.close(); file.close();
-    //         return secret;
-    //     }
-    //     catch (Exception e) {Logger.error("Unexpected error during deserialization process"); return null;}
-        
-    // }
-
+    private void help() {}
     private void encrypt()
     {
         try
         {
             Cipher cipher = Cipher.getInstance(this.algorithm); String message = "";
             FileReader reader = new FileReader(this.input); FileWriter writer = new FileWriter(this.output);
-            cipher.init(Cipher.ENCRYPT_MODE, secret.getKey(), secret.getIv()); int data; int counter = 0;
+            cipher.init(Cipher.ENCRYPT_MODE, this.secret.getKey(), this.secret.getIv()); int data; int counter = 0;
             while ((data = reader.read()) != -1)
             {
                 message += (char) data;
@@ -121,7 +145,7 @@ public class Encryptor
         {
             Cipher cipher = Cipher.getInstance(this.algorithm); String message = "";
             FileReader reader = new FileReader(this.input); FileWriter writer = new FileWriter(this.output);
-            cipher.init(Cipher.DECRYPT_MODE, secret.getKey(), secret.getIv()); int data;
+            cipher.init(Cipher.DECRYPT_MODE, this.secret.getKey(), this.secret.getIv()); int data;
             while ((data = reader.read()) != -1)
             {
                 if ((char) data == '\n')
@@ -145,8 +169,8 @@ public class Encryptor
         {
             if (main.ready)
             {
-                if (main.mode.equals("encrypt")) {main.encrypt();}
-                else if (main.mode.equals("decrypt")) {main.decrypt();}
+                if (main.mode == 1) {main.encrypt();}
+                else if (main.mode == 0) {main.decrypt();}
             }
         }
         catch (Exception e)
