@@ -30,4 +30,25 @@ Parameters that can be set by the user:
                         decryption. It is required to provide this value.
 -------------------------------------------------------------------------------------------------------
 Example calls:
+Note that commands below are run while having the source code folder open in terminal.
+So the path in the terminal ends with 'Encryptor' folder.
+-------------------------------------------------------------------------------------------------------
+1) java Encryptor -enc -secret="./.secret" -input="./.message" -output="./.encrypted"
+
+This is the most basic command that encrypts the message stored in "./.message" using the secret
+stored in "./.secret" and then saves encryption in "./.encrypted". The encryption is there by default
+so -enc parameter can be ommited.
+-------------------------------------------------------------------------------------------------------
+2) java Encryptor -dec -secret="./.secret" -input="./.encrypted" -output="./.decrypted"
+
+Equivalent command to the one above only this time it decrypts the message stored in "./.encrypted",
+using the secret stored in "./.secret" and then saves decryption in "./.decrypted".
+-------------------------------------------------------------------------------------------------------
+3) java Encryptor -gennew -enc -secret="./.secret" -input="./.message" -output="./.encrypted"
+
+Check point 1) for reference. This command encrypts the message using newly generated secret.
+-------------------------------------------------------------------------------------------------------
+4) java Encryptor -enc -buffer="32" -secret="./.secret" -input="./.message" -output="./.encrypted"
+
+Check point 1) for reference. This command encrypts the message using specified buffer size.
 -------------------------------------------------------------------------------------------------------

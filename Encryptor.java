@@ -13,10 +13,6 @@ public class Encryptor
     private int buffer = 16;
     private boolean bufferSet = false;
     private final String algorithm = "AES/CBC/PKCS5Padding";
-    
-    
-    
-    
     /* Secret related fields */
     private boolean generated = false;
     private String secretPath = null;
@@ -25,6 +21,7 @@ public class Encryptor
     /* I/O related fields */
     private String input = null;
     private String output = null;
+    private String helpPath = "./config/help.txt";
     /* Empty constructor (needed to avoid 'serial' keyword) */
     private Encryptor() {}
     /* Method for preparing class variables to work as expected and also to check correctness of user input */
@@ -82,16 +79,16 @@ public class Encryptor
                 {
                     Logger.info("Setting path for the output file."); this.output = args[m].split("=")[1];
                     if (this.input.equals(this.output)) {Logger.error("Input and output cannot point to the same file."); return false;}
-                    File file = new File(this.output); FileWriter writer = new FileWriter(file); writer.close();
                 }
                 catch (Exception e) {Logger.error("Error while setting path for output file. Most likely provided value contains non-accessible path in your system."); return false;}
             }
             /* -------------------- */
         }
+        if (this.generated && (this.mode == 0)) {Logger.error("It is only possible to decrypt the message using the same secret as was used to encrypt it."); return false;}
         if (this.input == null) {Logger.error("Missing input file."); return false;}
         if (this.output == null) {Logger.error("Missing output file."); return false;}
         if ((this.mode == 0) && (this.bufferSet)) {Logger.warning("Buffer is not being used in DECRYPT mode. No need to change its value.");}
-        if ((this.secretPath == null) && (!this.generated)) {Logger.error("Missing argument with the path for storing/accessing the secret."); return false;}
+        if (this.secretPath == null) {Logger.error("Missing argument with the path for storing/accessing the secret."); return false;}
         if ((this.secretPath != null) && (!this.generated))
         {
             try
@@ -107,10 +104,29 @@ public class Encryptor
             try {Logger.info("Deserializing secret object"); this.secret = new Secret(); this.secret = this.secret.deserialize(this.secretPath);}
             catch (Exception e) {Logger.error("Deserialization error. Most likely the file does not contain secret."); return false;}
         }
+        if (this.output != null)
+        {
+            try {File file = new File(this.output); FileWriter writer = new FileWriter(file); writer.close();}
+            catch (Exception e) {Logger.error("Output file reading error. Most likely path points to the file that is not accessible by the system."); return false;}
+        }
         return true;
     }
-    private void help() {}
-    private void encrypt()
+    private void help()
+    {
+        try
+        {
+            File file = new File(this.helpPath); FileReader reader = new FileReader(file);
+            int data; String message = ""; int counter = 0;
+            while ((data = reader.read()) != -1)
+            {
+                message += (char) data; counter += 1;
+                if (counter == this.buffer) {System.out.print(message); counter = 0; message = "";}
+            }
+            if (message.length() != 0) {System.out.print(message); counter = 0; message = "";} reader.close();
+        }
+        catch (Exception e) {Logger.error("Error while executing 'help' function. Most likely the file is missing.");}
+    }
+    private boolean encrypt()
     {
         try
         {
@@ -134,12 +150,12 @@ public class Encryptor
                 writer.write(Base64.getEncoder().encodeToString(cipher_str) + "\n");
                 counter = 0; message = "";
             }
-            reader.close(); writer.close();
+            reader.close(); writer.close(); return true;
         }
-        catch (Exception e) {Logger.error("Unexpected error during encryption process");}
+        catch (Exception e) {Logger.error("Unexpected error during encryption process"); return false;}
     }
 
-    private void decrypt()
+    private boolean decrypt()
     {
         try
         {
@@ -156,9 +172,9 @@ public class Encryptor
                 else {message += (char) data;}
             }
             reader.close(); writer.close();
-
+            return true;
         }
-        catch (Exception e) {Logger.error("Unexpected error during decryption process");}
+        catch (Exception e) {Logger.error("Unexpected error during decryption process"); return false;}
     }
 
     public static void main(String[] args)
@@ -169,9 +185,10 @@ public class Encryptor
         {
             if (main.ready)
             {
-                if (main.mode == 1) {main.encrypt();}
-                else if (main.mode == 0) {main.decrypt();}
+                if (main.mode == 1) {boolean encrypted = main.encrypt(); if (encrypted) {Logger.info("File successfully encrypted.");}}
+                else if (main.mode == 0) {boolean decrypted = main.decrypt(); if (decrypted) {Logger.info("File successfully decrypted.");}}
             }
+            else {main.help();}
         }
         catch (Exception e)
         {
