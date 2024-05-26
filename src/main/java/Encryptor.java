@@ -1,8 +1,14 @@
 /* Necessary imports */
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Base64;
+import java.util.stream.Collectors;
+
 import javax.crypto.Cipher;
 /* Main class */
 public class Encryptor
@@ -21,7 +27,7 @@ public class Encryptor
     /* I/O related fields */
     private String input = null;
     private String output = null;
-    private String helpPath = "./config/help.txt";
+    private String helpPath = "help.txt";
     /* Empty constructor (needed to avoid 'serial' keyword) */
     private Encryptor() {}
     /* Method for preparing class variables to work as expected and also to check correctness of user input */
@@ -115,7 +121,8 @@ public class Encryptor
     {
         try
         {
-            File file = new File(this.helpPath); FileReader reader = new FileReader(file);
+            InputStream file = Encryptor.class.getClassLoader().getResourceAsStream(this.helpPath);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(file));
             int data; String message = ""; int counter = 0;
             while ((data = reader.read()) != -1)
             {
