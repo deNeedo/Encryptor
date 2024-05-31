@@ -4,8 +4,11 @@ import java.io.FileReader;
 public class Validator {
     private static String[] commands = new String[] {"exit", "help", "encrypt", "enc", "decrypt", "dec", "login", "logout", "register", "reg", "deregister", "dereg"};
     public static String checkCommand(String data) {
-        if (data == null) {return null;}
-        for (int m = 0; m < commands.length; m++) {if (commands[m].equals(data)) {return commands[m];}}
+        if (data == null) return null;
+        for (int m = 0; m < commands.length; m++)
+        {
+            if (commands[m].equals(data)) return commands[m];
+        }
         return "invalid";
     }
     public static String checkConfig(String configPath) {
@@ -22,6 +25,7 @@ public class Validator {
     }
     public static boolean checkPass(String password)
     {
-        return true;
+        if (password != null) return true;
+        else return false;
     }
 }
