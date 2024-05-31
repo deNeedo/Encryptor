@@ -29,7 +29,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>Encryptor</mainClass> <!-- Replace with your actual main class -->
+                                    <mainClass>Encryptor</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
