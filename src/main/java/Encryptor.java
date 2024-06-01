@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -12,11 +13,11 @@ import javax.crypto.spec.IvParameterSpec;
 
 public class Encryptor
 {
-    private boolean isAuthorized;
+    private String currentUser;
     private boolean isRunning;
     private Encryptor()
     {
-        this.isAuthorized = false;
+        this.currentUser = null;
         this.isRunning = true;
         DataGateway.init();
     }
@@ -56,7 +57,7 @@ public class Encryptor
         }
         catch (Exception e) {Logger.error(e.getMessage());}
     }
-    private void encrypt(String recipient, String path)
+    private void encrypt(String path, String recipient)
     {
         try
         {
@@ -68,16 +69,14 @@ public class Encryptor
 
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            /* need a separate class for file handling */
-            File dir = new File("./temp");
-            if (!dir.exists()) dir.mkdirs();
-            FileWriter writer = new FileWriter("./temp/encrypted");
+
+            int messageID = DataGateway.createMessage(recipient);
             data = CryptoGen.AES2String(secretKey);
             byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            writer.write(Base64.getEncoder().encodeToString(encrypted) + "\n");
+            DataGateway.updateMessage(messageID, Base64.getEncoder().encodeToString(encrypted) + "\n");
             data = CryptoGen.IV2String(iv);
             encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            writer.write(Base64.getEncoder().encodeToString(encrypted) + "\n");
+            DataGateway.updateMessage(messageID, Base64.getEncoder().encodeToString(encrypted) + "\n");
 
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv);
@@ -90,46 +89,41 @@ public class Encryptor
                 if (temp.length() == 16)
                 {
                     encrypted = cipher.doFinal(temp.getBytes(StandardCharsets.UTF_8));
-                    writer.write(Base64.getEncoder().encodeToString(encrypted) + "\n");
+                    DataGateway.updateMessage(messageID, Base64.getEncoder().encodeToString(encrypted) + "\n");
                     temp = "";
                 }
             }
             if (temp.length() != 0)
             {
                 encrypted = cipher.doFinal(temp.getBytes(StandardCharsets.UTF_8)); 
-                writer.write(Base64.getEncoder().encodeToString(encrypted) + "\n");
+                DataGateway.updateMessage(messageID, Base64.getEncoder().encodeToString(encrypted) + "\n");
                 temp = "";
             }
             reader.close();
-            writer.close();
         }
         catch (Exception e) {e.printStackTrace();}
     }
 
-    private void decrypt(String path)
+    private void decrypt(String keyPath, String user)
     {
         try
         {
-            File file = new File("./secret/secret.key");
-            File dir = new File("./secret");
-            if (!dir.exists()) dir.mkdirs();
-            FileReader reader = new FileReader(file);
+            FileReader reader = new FileReader(keyPath);
             String data = "";
             int code;
             while ((code = reader.read()) != -1) {data += (char) code;}
             PrivateKey privateKey = CryptoGen.String2Private(data);
             reader.close();
             data = "";
-
-            file = new File("./temp/encrypted");
-            dir = new File("./temp");
-            if (!dir.exists()) dir.mkdirs();
-            reader = new FileReader(file);
-            FileWriter writer = new FileWriter("./temp/decrypted");
+            String encrypted = DataGateway.getMessage(user);
+            StringReader sreader;
+            if (encrypted != null)
+            {sreader = new StringReader(encrypted);}
+            else {throw new Exception("No messages to decrypt");}
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             SecretKey secret = null; IvParameterSpec iv = null; int flag = 1;
-            while ((code = reader.read()) != -1)
+            while ((code = sreader.read()) != -1)
             {
                 if ((char) code == '\n')
                 {
@@ -142,7 +136,6 @@ public class Encryptor
                     }
                     else if (flag == 0)
                     {
-                        Logger.info("IV after reading from file: " + data);
                         byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(data));
                         iv = CryptoGen.String2IV(new String(decrypted));
                         flag = -1;
@@ -153,7 +146,7 @@ public class Encryptor
                     else
                     {
                         byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(data));
-                        writer.write(new String(decrypted));
+                        System.out.print(new String(decrypted));
                         data = "";
                     }
                 }
@@ -162,10 +155,10 @@ public class Encryptor
                     data += (char) code;
                 }
             }
-            reader.close();
-            writer.close();
+            System.out.print("\n");
+            sreader.close();
         }
-        catch (Exception e) {Logger.error("Unexpected error during decryption process"); e.printStackTrace();}
+        catch (Exception e) {Logger.error(e.getMessage());}
     }
 
     public static void main(String[] args) throws Exception
@@ -183,53 +176,34 @@ public class Encryptor
                 else if (code == "invalid") {Logger.error("000: No such command");}
                 else if (code == "encrypt" || code == "enc")
                 {
-                    if (main.isAuthorized)
+                    if (main.currentUser != null)
                     {
                         String path = Logger.input("Enter a path for the file you wish to encrypt: ");
-                        String key = null;
+                        String user = "";
                         if (Validator.checkPath(path))
                         {
-                            String user = Logger.input("Enter a username of your recipient: ");
-                            key = DataGateway.getRSA(user);
+                            user = Logger.input("Enter a username of your recipient: ");
+                            if (DataGateway.fetchUser(user)) {Logger.info("000: Encrypting"); main.encrypt(path, user);}
+                            else {Logger.error("000: No such user in the system");}
                         }
-                        if (key != null) {Logger.info("000: Encrypting"); main.encrypt(path, key);}
-                        else {Logger.error("000: No such user in the system");}
                     }
                     else {Logger.error("000: Not authorized");}
                 }
                 else if (code == "decrypt" || code == "dec")
                 {
-                    if (main.isAuthorized)
+                    if (main.currentUser != null)
                     {
-                        String path = Logger.input("Enter a path for storing the decrypted message: ");
-                        if (Validator.checkPath(path))
+                        String keyPath = Logger.input("Enter a path for secret key: ");
+                        if (Validator.checkPath(keyPath))
                         {
-                            main.decrypt(path);
+                            main.decrypt(keyPath, main.currentUser);
                         }
                     }
                     else {Logger.error("000: Not authorized");}
                 }
                 else if (code == "register" || code == "reg")
                 {
-                    if (!main.isAuthorized)
-                    {
-                        String user = Logger.input("Enter a username: ");
-                        String pass = null;
-                        if (DataGateway.fetchUser(user))
-                        {
-                            pass = Logger.input("Enter a passphrase: ");
-                            if (Validator.checkPass(pass))
-                            {
-                                Logger.info("000: Signing up"); main.register(user, pass);
-                            }
-                        }
-                        else {Logger.error("Provided username is already taken");}
-                    }
-                    else {Logger.warning("000: Already logged in");}
-                }
-                else if (code == "login")
-                {
-                    if (!main.isAuthorized)
+                    if (main.currentUser == null)
                     {
                         String user = Logger.input("Enter a username: ");
                         String pass = null;
@@ -238,8 +212,28 @@ public class Encryptor
                             pass = Logger.input("Enter a passphrase: ");
                             if (Validator.checkPass(pass))
                             {
+                                Logger.info("000: Signing up"); 
+                                main.register(user, pass);
+                                main.currentUser = user;
+                            }
+                        }
+                        else {Logger.error("Provided username is already taken");}
+                    }
+                    else {Logger.warning("000: Already logged in");}
+                }
+                else if (code == "login")
+                {
+                    if (main.currentUser == null)
+                    {
+                        String user = Logger.input("Enter a username: ");
+                        String pass = null;
+                        if (DataGateway.fetchUser(user))
+                        {
+                            pass = Logger.input("Enter a passphrase: ");
+                            if (Validator.checkPass(pass))
+                            {
                                 Logger.info("000: Signing in");
-                                if (main.login(user, pass)) main.isAuthorized = true;
+                                if (main.login(user, pass)) main.currentUser = user;
                             }
                         }
                         else {Logger.error("No such user in the system");}
@@ -248,7 +242,7 @@ public class Encryptor
                 }
                 else if (code == "logout")
                 {
-                    if (main.isAuthorized) {Logger.info("000: Signing out"); main.isAuthorized = false; }
+                    if (main.currentUser != null) {Logger.info("000: Signing out"); main.currentUser = null;}
                     else {Logger.error("000: User not logged in");}
                 }
             }

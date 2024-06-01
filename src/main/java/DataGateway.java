@@ -52,7 +52,7 @@ public class DataGateway
             ResultSet rs = ps.executeQuery();
             String key = null;
             while (rs.next()) {key = rs.getString("key");}
-            rs.close(); ps.close(); conn.close();
+            ps.close(); conn.close();
             return key;
         }
         catch (Exception e) {Logger.error("Cannot connect"); return null;}
@@ -67,7 +67,7 @@ public class DataGateway
             ResultSet rs = ps.executeQuery();
             String result = null;
             while (rs.next()) {result = rs.getString("name");}
-            rs.close(); ps.close(); conn.close();
+            ps.close(); conn.close();
             if (result == null) {throw new Exception("Unexpected error while adding new user");}
         }
         catch (Exception e)
@@ -100,8 +100,8 @@ public class DataGateway
             ps.setString(1, user);
             ResultSet rs = ps.executeQuery(); String result = null;
             while (rs.next()) {result = rs.getString("name");}
-            rs.close(); ps.close(); conn.close();
-            if (result == null) {return true;}
+            ps.close(); conn.close();
+            if (result != null) {return true;}
         }
         catch (Exception e) {}
         return false;
@@ -111,14 +111,58 @@ public class DataGateway
         try
         {
             Connection conn = DriverManager.getConnection(DataGateway.url, DataGateway.props);
-            PreparedStatement ps = conn.prepareStatement("SELECT message FROM messages WHERE name = ?");
+            PreparedStatement ps = conn.prepareStatement("SELECT content FROM messages WHERE recipient = ? ORDER BY date");
             ps.setString(1, user);
             ResultSet rs = ps.executeQuery(); String result = null;
-            while (rs.next()) {result = rs.getString("message");}
-            rs.close(); ps.close(); conn.close();
+            while (rs.next()) {result = rs.getString("content");}
+            ps.close(); conn.close();
             if (result != null) {return result;}
         }
         catch (Exception e) {}
         return null;
+    }
+    public static int createMessage(String user)
+    {
+        int result = 0;
+        try
+        {
+            Connection conn = DriverManager.getConnection(DataGateway.url, DataGateway.props);
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO messages (recipient, content) VALUES (?, ?)");
+            ps.setString(1, user); ps.setString(2, "");
+            result = ps.executeUpdate();
+            ps.close();
+            if (result == 0) {throw new Exception("Unexpected error while creating new message");}
+            else
+            {
+                ps = conn.prepareStatement("SELECT id FROM messages WHERE recipient = ? ORDER BY date");
+                ps.setString(1, user);
+                ResultSet rs = ps.executeQuery();
+                rs.next();
+                result = rs.getInt("id");
+                ps.close(); conn.close();
+            }
+        }
+        catch (Exception e) {Logger.error(e.getMessage());}
+        return result;
+    }
+    public static void updateMessage(int id, String content)
+    {
+        try
+        {
+            Connection conn = DriverManager.getConnection(DataGateway.url, DataGateway.props);
+            PreparedStatement ps = conn.prepareStatement("SELECT content FROM messages WHERE id = ?");
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            String result = null;
+            while(rs.next()) result = rs.getString("content");
+            ps.close();
+            if (result == null) {throw new Exception("Unexpected error while reading the message");}
+            ps = conn.prepareStatement("UPDATE messages SET content = ? WHERE id = ?");
+            ps.setString(1, result + content); ps.setInt(2, id);
+            int code = ps.executeUpdate();
+            ps.close(); conn.close();
+            if (code == 0) {throw new Exception("Unexpected error while updating the message");}
+        }
+        catch (Exception e) {Logger.error(e.getMessage());}
     }
 }
