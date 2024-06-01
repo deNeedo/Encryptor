@@ -52,12 +52,29 @@ public class DataGateway
             ResultSet rs = ps.executeQuery();
             String key = null;
             while (rs.next()) {key = rs.getString("key");}
-            ps.close(); conn.close();
+            rs.close(); ps.close(); conn.close();
             return key;
         }
         catch (Exception e) {Logger.error("Cannot connect"); return null;}
     }
-
+    public static void loginUser(String username, String password)
+    {
+        try
+        {
+            Connection conn = DriverManager.getConnection(DataGateway.url, DataGateway.props);
+            PreparedStatement ps = conn.prepareStatement("SELECT name FROM users WHERE name = ? and password = ?");
+            ps.setString(1, username); ps.setString(2, password);
+            ResultSet rs = ps.executeQuery();
+            String result = null;
+            while (rs.next()) {result = rs.getString("name");}
+            rs.close(); ps.close(); conn.close();
+            if (result == null) {throw new Exception("Unexpected error while adding new user");}
+        }
+        catch (Exception e)
+        {
+            Logger.error(e.getMessage());
+        }
+    }
     public static void registerUser(String username, String password, String publicKey)
     {
         try
@@ -83,7 +100,7 @@ public class DataGateway
             ps.setString(1, user);
             ResultSet rs = ps.executeQuery(); String result = null;
             while (rs.next()) {result = rs.getString("name");}
-            ps.close(); conn.close();
+            rs.close(); ps.close(); conn.close();
             if (result == null) {return true;}
         }
         catch (Exception e) {}
@@ -98,7 +115,7 @@ public class DataGateway
             ps.setString(1, user);
             ResultSet rs = ps.executeQuery(); String result = null;
             while (rs.next()) {result = rs.getString("message");}
-            ps.close(); conn.close();
+            rs.close(); ps.close(); conn.close();
             if (result != null) {return result;}
         }
         catch (Exception e) {}

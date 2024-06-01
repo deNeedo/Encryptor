@@ -9,7 +9,7 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-/* Main class */
+
 public class Encryptor
 {
     private boolean isAuthorized;
@@ -19,6 +19,20 @@ public class Encryptor
         this.isAuthorized = false;
         this.isRunning = true;
         DataGateway.init();
+    }
+    private boolean login(String username, String password)
+    {
+        try
+        {
+            String hash = CryptoGen.hash(password);
+            DataGateway.loginUser(username, hash);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Logger.error(e.getMessage());
+            return false;
+        }
     }
     private void register(String username, String password)
     {
@@ -157,10 +171,6 @@ public class Encryptor
     public static void main(String[] args) throws Exception
     {
         Encryptor main = new Encryptor();
-        // main.register("test", "test");
-        // main.encrypt("test", "./config/db.config");
-        // main.decrypt("./temp/stage1");
-        
         if (DataGateway.isReady())
         {
             while (main.isRunning)
@@ -173,26 +183,31 @@ public class Encryptor
                 else if (code == "invalid") {Logger.error("000: No such command");}
                 else if (code == "encrypt" || code == "enc")
                 {
-                    // if (main.authorized) {Logger.info("000: Encrypting"); main.encrypt();}
-                    // else {Logger.error("000: Not authorized");}
-                    String path = Logger.input("Enter a path for the file you wish to encrypt: ");
-                    String key = null;
-                    if (Validator.checkPath(path))
+                    if (main.isAuthorized)
                     {
-                        String user = Logger.input("Enter a username of your recipient: ");
-                        key = DataGateway.getRSA(user);
+                        String path = Logger.input("Enter a path for the file you wish to encrypt: ");
+                        String key = null;
+                        if (Validator.checkPath(path))
+                        {
+                            String user = Logger.input("Enter a username of your recipient: ");
+                            key = DataGateway.getRSA(user);
+                        }
+                        if (key != null) {Logger.info("000: Encrypting"); main.encrypt(path, key);}
+                        else {Logger.error("000: No such user in the system");}
                     }
-                    if (key != null) {Logger.info("000: Encrypting"); main.encrypt(path, key);}
-                    else {Logger.error("000: No such user in the system");}
+                    else {Logger.error("000: Not authorized");}
                 }
-                else if (code == "decrypt" || code == "dec") {
-                    // if (main.authorized) {Logger.info("000: Decrypting"); main.decrypt();}
-                    // else {Logger.error("000: Not authorized");}
-                    String path = Logger.input("Enter a path for storing the decrypted message: ");
-                    if (Validator.checkPath(path))
+                else if (code == "decrypt" || code == "dec")
+                {
+                    if (main.isAuthorized)
                     {
-                        main.decrypt(path);
+                        String path = Logger.input("Enter a path for storing the decrypted message: ");
+                        if (Validator.checkPath(path))
+                        {
+                            main.decrypt(path);
+                        }
                     }
+                    else {Logger.error("000: Not authorized");}
                 }
                 else if (code == "register" || code == "reg")
                 {
@@ -210,27 +225,32 @@ public class Encryptor
                         }
                         else {Logger.error("Provided username is already taken");}
                     }
-                    else
-                    {
-                        Logger.warning("000: Already logged in");
-                    }
+                    else {Logger.warning("000: Already logged in");}
                 }
-                // else if (code == "deregister" || code == "dereg")
-                // {
-                //     if (main.authorized) {Logger.info("000: Unsubscribing"); main.deregister();}
-                //     else {Logger.error("000: Not authorized");}
-                // }
-                // else if (code == "login")
-                // {
-                //     if (!main.authorized) {Logger.info("000: Singing in"); main.login();}
-                //     Logger.warning("000: Already logged in");
-                //     Logger.input("Log in to different account? (y/n): ");
-                // }
-                // else if (code == "logout")
-                // {
-                //     if (main.authorized) {Logger.info("000: Signing out"); main.logout();}
-                //     else {Logger.error("000: Not authorized");}
-                // }
+                else if (code == "login")
+                {
+                    if (!main.isAuthorized)
+                    {
+                        String user = Logger.input("Enter a username: ");
+                        String pass = null;
+                        if (!DataGateway.fetchUser(user))
+                        {
+                            pass = Logger.input("Enter a passphrase: ");
+                            if (Validator.checkPass(pass))
+                            {
+                                Logger.info("000: Signing in");
+                                if (main.login(user, pass)) main.isAuthorized = true;
+                            }
+                        }
+                        else {Logger.error("No such user in the system");}
+                    }
+                    else Logger.warning("000: Already logged in");
+                }
+                else if (code == "logout")
+                {
+                    if (main.isAuthorized) {Logger.info("000: Signing out"); main.isAuthorized = false; }
+                    else {Logger.error("000: User not logged in");}
+                }
             }
         }
     }

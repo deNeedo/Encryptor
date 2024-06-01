@@ -2,7 +2,7 @@ import java.io.File;
 import java.io.FileReader;
 
 public class Validator {
-    private static String[] commands = new String[] {"exit", "help", "encrypt", "enc", "decrypt", "dec", "login", "logout", "register", "reg", "deregister", "dereg"};
+    private static String[] commands = new String[] {"exit", "help", "encrypt", "enc", "decrypt", "dec", "login", "logout", "register", "reg"};
     public static String checkCommand(String data) {
         if (data == null) return null;
         for (int m = 0; m < commands.length; m++)
