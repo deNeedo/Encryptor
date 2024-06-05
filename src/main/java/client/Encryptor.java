@@ -82,9 +82,9 @@ public class Encryptor
                     if (Encryptor.requestStatus.equals(RequestCode.Success.getCode()))
                     {
                         main.currentUser = user;
-                        Logger.error("Successfully logged in");
+                        Logger.info("Successfully logged in");
                     }
-                    else {Logger.error("No such user in the system");}
+                    else {Logger.error("Wrong username or password");}
                     Encryptor.requestStatus = RequestCode.Pending.getCode();
                 }
                 else {Logger.warning("Already logged in");}
@@ -126,7 +126,7 @@ public class Encryptor
                             writer.write(Encryptor.payload); writer.close();
                         }
                         catch (Exception e) {Logger.error(e.getMessage());}
-                        Logger.error("Successfully registered");
+                        Logger.info("Successfully registered");
                     }
                     else {Logger.error("Such user already exists in the system");}
                     Encryptor.requestStatus = RequestCode.Pending.getCode();
@@ -154,7 +154,7 @@ public class Encryptor
                     }
                     if (Encryptor.requestStatus.equals(RequestCode.Success.getCode()))
                     {
-                        Logger.error("Successfully encrypted the data");
+                        Logger.info("Successfully encrypted the data");
                     }
                     else {Logger.error("Unexpected error while encrypting the data");}
                     Encryptor.requestStatus = RequestCode.Pending.getCode();
@@ -187,7 +187,7 @@ public class Encryptor
                             writer.write(Encryptor.payload); writer.close();
                         }
                         catch (Exception e) {Logger.error(e.getMessage());}
-                        Logger.error("Successfully decrypted the data");
+                        Logger.info("Successfully decrypted the data");
                     }
                     else if (Encryptor.requestStatus.equals(RequestCode.NoMessages.getCode()))
                     {
@@ -241,9 +241,18 @@ public class Encryptor
             }
             else if (message.contains(RequestCode.Success.getCode()))
             {
-                if (message.contains(RequestCode.Register.getCode()) || message.contains(RequestCode.Decrypt.getCode()))
+                if (message.contains(RequestCode.Register.getCode()))
                 {
                     Encryptor.payload = message.split(" ")[2];
+                }
+                else if (message.contains(RequestCode.Decrypt.getCode()))
+                {
+                    int counter = 0; Encryptor.payload = "";
+                    for (String message_part : message.split(" "))
+                    {
+                        if (counter < 2) {counter += 1;}
+                        else {Encryptor.payload += (message_part + " ");}
+                    }
                 }
                 Encryptor.requestStatus = RequestCode.Success.getCode();
                 this.isBusy = false;

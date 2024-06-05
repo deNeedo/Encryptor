@@ -22,10 +22,10 @@ import org.java_websocket.handshake.ClientHandshake;
 
 public class Encryptor
 {
-    /*private boolean isRunning;*/
+    /* private boolean isRunning; */
     private WebSocketServer server;
 
-private Encryptor() {/*this.isRunning = true;*/}
+    private Encryptor() {/* this.isRunning = true; */}
 
     private static boolean login(String user, String pass)
     {
@@ -161,15 +161,9 @@ private Encryptor() {/*this.isRunning = true;*/}
         @Override
         public void onStart() {Logger.info("Server started successfully");}
         @Override
-        public void onOpen(WebSocket conn, ClientHandshake handshake)
-        {
-            conn.send(RequestCode.Connected.getCode());
-        }
+        public void onOpen(WebSocket conn, ClientHandshake handshake) {conn.send(RequestCode.Connected.getCode());}
         @Override
-        public void onClose(WebSocket conn, int code, String reason, boolean remote)
-        {
-            System.out.println("Closed connection to " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
-        }
+        public void onClose(WebSocket conn, int code, String reason, boolean remote) {Logger.info("Closed connection to " + conn.getRemoteSocketAddress());}
         @Override
         public void onError(WebSocket conn, Exception ex) {}
         @Override
@@ -177,7 +171,6 @@ private Encryptor() {/*this.isRunning = true;*/}
         {
             if (message.contains(RequestCode.Login.getCode()))
             {
-
                 String[] data = message.split(":");
                 String user = Validator.checkNull(data[1]);
                 String pass = Validator.checkNull(data[2]);
