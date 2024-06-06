@@ -51,7 +51,6 @@ public class Encryptor
                 {
                     while (!main.client.isClosed())
                     {
-                        Logger.warning("closing");
                         try {main.client.wait();}
                         catch (Exception e) {Logger.error(e.getMessage());}
                     }
@@ -70,7 +69,7 @@ public class Encryptor
                     String pass = Logger.input("Enter your password: ");
                     pass = Validator.checkNull(pass);
                     main.client.setBusy(true);
-                    main.client.send(RequestCode.Login.getCode() + ":" + user + ":" + pass);
+                    main.client.send(RequestCode.Login.getCode() + " " + user + " " + pass);
                     synchronized (main.client)
                     {
                         while (main.client.isBusy())
@@ -94,7 +93,7 @@ public class Encryptor
                 if (main.currentUser != null)
                 {
                     main.currentUser = null;
-                    Logger.error("Successfully logged out");
+                    Logger.info("Successfully logged out");
                     Encryptor.requestStatus = RequestCode.Pending.getCode();
                 }
             }
@@ -107,7 +106,7 @@ public class Encryptor
                     String pass = Logger.input("Enter your password: ");
                     pass = Validator.checkNull(pass);
                     main.client.setBusy(true);
-                    main.client.send(RequestCode.Register.getCode() + ":" + user + ":" + pass);
+                    main.client.send(RequestCode.Register.getCode() + " " + user + " " + pass);
                     synchronized (main.client)
                     {
                         while (main.client.isBusy())
@@ -120,7 +119,7 @@ public class Encryptor
                     {
                         try
                         {
-                            File file = new File("./secret/secret.key"); File dir = new File("./secret");
+                            File file = new File("./secret/" + user + ".key"); File dir = new File("./secret");
                             if (!dir.exists()) {dir.mkdirs();}
                             FileWriter writer = new FileWriter(file);
                             writer.write(Encryptor.payload); writer.close();
@@ -140,6 +139,7 @@ public class Encryptor
                 {
                     String path = Logger.input("Enter a path for the file you wish to encrypt: ");
                     path = Validator.checkPath(path);
+                    if (path == null) {Logger.error("Error while reading the file"); continue;}
                     String user = Logger.input("Enter a username of your recipient: ");
                     user = Validator.checkNull(user);
                     main.client.setBusy(true);
@@ -167,6 +167,7 @@ public class Encryptor
                 {
                     String path = Logger.input("Enter a path for the secret key: ");
                     path = Validator.checkPath(path);
+                    if (path == null) {Logger.error("Error while reading the file"); continue;}
                     main.client.setBusy(true);
                     main.client.send(RequestCode.Decrypt.getCode() + " " + main.currentUser + " " + path);
                     synchronized (main.client)
@@ -177,17 +178,11 @@ public class Encryptor
                             catch (Exception e) {Logger.error(e.getMessage());}
                         }
                     }
+                    Logger.info(Encryptor.requestStatus);
                     if (Encryptor.requestStatus.equals(RequestCode.Success.getCode()))
                     {
-                        try
-                        {
-                            File file = new File("./secret/message.decrypted"); File dir = new File("./secret");
-                            if (!dir.exists()) {dir.mkdirs();}
-                            FileWriter writer = new FileWriter(file);
-                            writer.write(Encryptor.payload); writer.close();
-                        }
-                        catch (Exception e) {Logger.error(e.getMessage());}
                         Logger.info("Successfully decrypted the data");
+                        System.out.println(Encryptor.payload);
                     }
                     else if (Encryptor.requestStatus.equals(RequestCode.NoMessages.getCode()))
                     {

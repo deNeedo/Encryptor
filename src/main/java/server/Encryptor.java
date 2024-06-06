@@ -100,12 +100,11 @@ public class Encryptor
             PrivateKey privateKey = CryptoGen.String2Private(data);
             reader.close();
             data = "";
-            String encrypted = DataGateway.getMessage(user);
             int mid = DataGateway.getMessageID(user);
+            String encrypted = DataGateway.getMessage(mid);
             StringReader sreader;
             if (encrypted != null) {sreader = new StringReader(encrypted);}
             else {return RequestCode.NoMessages.getCode();}
-            DataGateway.deleteMessage(mid);
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             SecretKey secret = null; IvParameterSpec iv = null; int flag = 1;
@@ -141,6 +140,8 @@ public class Encryptor
                     data += (char) code;
                 }
             }
+            Logger.info(message);
+            DataGateway.deleteMessage(mid);
             sreader.close(); return message;
         }
         catch (Exception e) {e.printStackTrace(); return null;}
@@ -169,36 +170,34 @@ public class Encryptor
         @Override
         public void onMessage(WebSocket conn, String message)
         {
-            if (message.contains(RequestCode.Login.getCode()))
+            String[] data = message.split(" ");
+            if (data[0].equals(RequestCode.Login.getCode()))
             {
-                String[] data = message.split(":");
                 String user = Validator.checkNull(data[1]);
                 String pass = Validator.checkNull(data[2]);
                 if (Encryptor.login(user, pass)) {conn.send(RequestCode.Success.getCode());}
                 else {conn.send(RequestCode.Failure.getCode());}
             }
-            else if (message.contains(RequestCode.Register.getCode()))
+            else if (data[0].equals(RequestCode.Register.getCode()))
             {
-                String[] data = message.split(":");
                 String user = Validator.checkNull(data[1]);
                 String pass = Validator.checkNull(data[2]);
                 String privateKey = Encryptor.register(user, pass);
                 if (privateKey != null) {conn.send(RequestCode.Success.getCode() + " " + RequestCode.Register.getCode() + " " + privateKey);}
                 else {conn.send(RequestCode.Failure.getCode());}
             }
-            else if (message.contains(RequestCode.Encrypt.getCode()))
+            else if (data[0].equals(RequestCode.Encrypt.getCode()))
             {
-                String[] data = message.split(" ");
                 String user = Validator.checkNull(data[1]);
                 String path = Validator.checkPath(data[2]);
                 if (Encryptor.encrypt(user, path)) {conn.send(RequestCode.Success.getCode());}
                 else {conn.send(RequestCode.Failure.getCode());}
             }
-            else if (message.contains(RequestCode.Decrypt.getCode()))
+            else if (data[0].equals(RequestCode.Decrypt.getCode()))
             {
-                String[] data = message.split(" ");
                 String user = Validator.checkNull(data[1]);
                 String path = Validator.checkPath(data[2]);
+                Logger.info(user); Logger.info(path);
                 message = Encryptor.decrypt(user, path);
                 if (message != null)
                 {

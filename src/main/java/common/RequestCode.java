@@ -2,15 +2,15 @@ package common;
 
 public enum RequestCode
 {
-    Connected("1"),
-    Login("2"),
-    Success("200"),
-    Failure("400"),
-    Pending("3"),
-    Register("500"),
-    Encrypt("5"),
-    Decrypt("6"),
-    NoMessages("707");
+    Connected("PZghI62FeW"),
+    Login("D7UMekhwXc"),
+    Success("nshA25KR4p"),
+    Failure("UtcTrrJGuI"),
+    Pending("gPyoTBsz86"),
+    Register("0t2ienbSEw"),
+    Encrypt("5rQi6GL2Bl"),
+    Decrypt("svoPjUkECe"),
+    NoMessages("DwOcdgyTaO");
 
     private final String code;
 

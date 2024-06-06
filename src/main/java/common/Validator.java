@@ -26,7 +26,7 @@ public class Validator
             FileReader reader = new FileReader(file);
             reader.close(); return path;
         }
-        catch (Exception e) {Logger.error("Error while reading the file"); return null;}
+        catch (Exception e) {return null;}
     }
     public static String checkVersion() 
     {

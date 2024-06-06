@@ -118,20 +118,21 @@ public class DataGateway
         catch (Exception e) {}
         return 0;
     }
-    public static String getMessage(String user)
+    public static String getMessage(int id)
     {
         try
         {
             Connection conn = DriverManager.getConnection(DataGateway.url, DataGateway.props);
-            PreparedStatement ps = conn.prepareStatement("SELECT content FROM messages WHERE recipient = ? ORDER BY date LIMIT 1");
-            ps.setString(1, user);
+            PreparedStatement ps = conn.prepareStatement("SELECT content FROM messages WHERE id = ?");
+            ps.setInt(1, id);
             ResultSet rs = ps.executeQuery(); String result = null;
             while (rs.next()) {result = rs.getString("content");}
             ps.close(); conn.close();
             if (result != null) {return result;}
+            return null;
         }
-        catch (Exception e) {}
-        return null;
+        catch (Exception e) {return null;}
+        
     }
     public static void deleteMessage(int ID)
     {
@@ -155,20 +156,21 @@ public class DataGateway
             PreparedStatement ps = conn.prepareStatement("INSERT INTO messages (recipient, content) VALUES (?, ?)");
             ps.setString(1, user); ps.setString(2, "");
             result = ps.executeUpdate();
-            ps.close();
+            ps.close(); conn.close();
             if (result == 0) {throw new Exception("Unexpected error while creating new message");}
             else
             {
+                conn = DriverManager.getConnection(DataGateway.url, DataGateway.props);
                 ps = conn.prepareStatement("SELECT id FROM messages WHERE recipient = ? ORDER BY date");
                 ps.setString(1, user);
                 ResultSet rs = ps.executeQuery();
                 rs.next();
                 result = rs.getInt("id");
                 ps.close(); conn.close();
+                return result;
             }
         }
-        catch (Exception e) {Logger.error(e.getMessage());}
-        return result;
+        catch (Exception e) {Logger.error(e.getMessage()); return 0;}
     }
     public static void updateMessage(int id, String content)
     {
