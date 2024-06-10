@@ -176,7 +176,6 @@ public class Encryptor
                     data += (char) code;
                 }
             }
-            Logger.info(message);
             DataGateway.deleteMessage(mid);
             sreader.close(); return message;
         }
@@ -225,7 +224,6 @@ public class Encryptor
             {
                 String user = Validator.checkNull(data[1]);
                 String path = Validator.checkPath(data[2]);
-                Logger.info(user); Logger.info(path);
                 message = Encryptor.decrypt(user, path);
                 if (message != null)
                 {

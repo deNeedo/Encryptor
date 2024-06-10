@@ -94,7 +94,7 @@ The correct command execution process looks like this:
 
 ![client_register_success](./assets/client_register_success.png)
 
-When you try to register using the username that already exists in the system, you will see this message:
+When you try to register using the username that already exists in the system, you will see this log:
 
 ![client_register_failure](./assets/client_register_failure.png)
 
@@ -103,11 +103,11 @@ The correct command execution process looks like this:
 
 ![client_login_success](./assets/client_login_success.png)
 
-If you are already logged in to the system, you will see this message:
+If you are already logged in to the system, you will see this log:
 
 ![client_login_warning](./assets/client_login_warning.png)
 
-When you try to log in, using the username that does not exists in the system, you will see this message:
+When you try to log in, using the username that does not exists in the system, you will see this log:
 
 ![client_login_failure](./assets/client_login_failure.png)
 
@@ -116,7 +116,7 @@ The correct command execution process looks like this:
 
 ![client_logout_success](./assets/client_logout_success.png)
 
-When you try to log out, while not being logged in prior to that, you will see this message:
+When you try to log out, while not being logged in prior to that, you will see this log:
 
 ![client_logout_warning](./assets/client_logout_warning.png)
 
@@ -130,8 +130,35 @@ However you can still close the app using keyboard interrupts (for instance Ctrl
 ![client_exit_forced](./assets/client_exit_forced.png)
 
 ##### Encrypt command example
+The correct command execution process looks like this:
 
+![client_encrypt_success](./assets/client_encrypt_success.png)
 
+If you try to use this command, while not being logged in, you will see this log:
+
+![client_encrypt_not_authorized](./assets/client_encrypt_not_authorized.png)
+
+If you provide a non existing path to the message you wish to encrypt, you will see this log:
+
+![client_encrypt_no_such_path](./assets/client_encrypt_no_such_path.png)
+
+If you make a mistake while providing user to whom you would like to send this message, you will see this log:
+
+![client_encrypt_no_such_user](./assets/client_encrypt_no_such_user.png)
 
 ##### Decrypt command example
+The correct command execution process looks like this:
 
+![client_decrypt_success](./assets/client_decrypt_success.png)
+
+However, if you have no encrypted messages waiting for you, you will see this log:
+
+![client_decrypt_no_messages](./assets/client_decrypt_no_messages.png)
+
+If you try to use this command, while not being logged in, you will see this log:
+
+![client_decrypt_not_authorized](./assets/client_decrypt_not_authorized.png)
+
+If you provide a non existing path to the message you wish to encrypt, you will see this log:
+
+![client_decrypt_no_such_path](./assets/client_decrypt_no_such_path.png)

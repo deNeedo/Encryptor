@@ -207,7 +207,6 @@ public class Encryptor
                                 catch (Exception e) {Logger.error(e.getMessage());}
                             }
                         }
-                        Logger.info(Encryptor.requestStatus);
                         if (Encryptor.requestStatus.equals(RequestCode.Success.getCode()))
                         {
                             Logger.info("Successfully decrypted the data");
