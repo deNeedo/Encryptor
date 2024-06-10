@@ -124,6 +124,7 @@ public class Encryptor
                         Logger.info("Successfully logged out");
                         Encryptor.requestStatus = RequestCode.Pending.getCode();
                     }
+                    else {Logger.warning("Already logged out");}
                 }
                 else if (command.equals("register"))
                 {

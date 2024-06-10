@@ -15,11 +15,8 @@ Encryptor is a secure and reliable application designed to safely store confiden
 
 Remark: Versions of the software mentioned above were used during development and testing process, however other versions might still support it.
 ### Installation
-#### Quickstart approach
-- **Download the assets from**: https://github.com/deNeedo/Encryptor/releases/latest
-
-Namely you are interested in these files: **server-X.Y.jar**, **client-X.Y.jar** and **setup.sql** where **X** adn **Y** represents the version indicator.
-- **Provide config for database for the server**:
+#### Configuration files
+- **Provide config for database**:
 ```bash
 [Default config path: ./config/db.config]
 [Contents of the file should be as below:]
@@ -30,6 +27,26 @@ db.user=[POSTGRES USER]
 db.password=[POSTGRES PASSWORD]
 [Replace the [...] with your personal configuration.]
 ```
+- **Provide config for server app**:
+```bash
+[Default config path: ./config/server.config]
+[Contents of the file should be as below:]
+server.address=[SERVER OPERATING IP ADDRESS]
+server.port=[SERVER OPERATING PORT]
+[Replace the [...] with your personal configuration.]
+```
+- **Provide config for client app**:
+```bash
+[Default config path: ./config/client.config]
+[Contents of the file should be as below:]
+client.address=[CLIENT OPERATING IP ADDRESS]
+client.port=[CLIENT OPERATING PORT]
+[Replace the [...] with your personal configuration.]
+```
+#### Quickstart approach
+- **Download the assets from**: https://github.com/deNeedo/Encryptor/releases/latest
+
+Namely you are interested in these files: **server-X.Y.jar**, **client-X.Y.jar** and **setup.sql** where **X** adn **Y** represents the version indicator.
 - **Initialize database with setup script**:
 ```bash
 psql -f ./path/to/setup.sql
@@ -44,17 +61,6 @@ git clone https://github.com/deNeedo/Encryptor.git
 mvn clean
 mvn install -P server
 mvn install -P client
-```
-- **Provide config for database for the server**:
-```bash
-[Default config path: ./config/db.config]
-[Contents of the file should be as below:]
-db.address=[POSTGRES OPERATING IP ADDRESS]
-db.port=[POSTGRES OPERATING PORT]
-db.database=encryptor
-db.user=[POSTGRES USER]
-db.password=[POSTGRES PASSWORD]
-[Replace the [...] with your personal configuration.]
 ```
 - **Initialize database with setup script**:
 ```bash
@@ -75,10 +81,57 @@ java -jar ./target/client-X.Y.jar
 #### Server
 After running the app server should initialize connection to the database and you should see something like that:
 
-![alt text](./assets/server_start.png)
+![server_start](./assets/server_start.png)
 #### Client
 After running the app client should initialize connection to the server and you should see something like that:
 
-![alt text](./assets/client_start.png)
+![client_start](./assets/client_start.png)
 
 **Supported commands are**: register, login, logout, encrypt, decrypt, exit
+
+##### Register command example
+The correct command execution process looks like this:
+
+![client_register_success](./assets/client_register_success.png)
+
+When you try to register using the username that already exists in the system, you will see this message:
+
+![client_register_failure](./assets/client_register_failure.png)
+
+##### Login command example
+The correct command execution process looks like this:
+
+![client_login_success](./assets/client_login_success.png)
+
+If you are already logged in to the system, you will see this message:
+
+![client_login_warning](./assets/client_login_warning.png)
+
+When you try to log in, using the username that does not exists in the system, you will see this message:
+
+![client_login_failure](./assets/client_login_failure.png)
+
+##### Logout command example
+The correct command execution process looks like this:
+
+![client_logout_success](./assets/client_logout_success.png)
+
+When you try to log out, while not being logged in prior to that, you will see this message:
+
+![client_logout_warning](./assets/client_logout_warning.png)
+
+##### Exit command example
+The correct command execution process looks like this:
+
+![client_exit_gentle](./assets/client_exit_gentle.png)
+
+However you can still close the app using keyboard interrupts (for instance Ctrl + C):
+
+![client_exit_forced](./assets/client_exit_forced.png)
+
+##### Encrypt command example
+
+
+
+##### Decrypt command example
+
