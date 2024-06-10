@@ -6,7 +6,7 @@ import java.util.Properties;
 
 public class Validator
 {
-    private static String[] commands = new String[] {"exit", "help", "encrypt", "decrypt", "login", "logout", "register"};
+    private static String[] commands = new String[] {"exit", "encrypt", "decrypt", "login", "logout", "register"};
     public static String checkCommand(String data)
     {
         if (data == null) {return null;}

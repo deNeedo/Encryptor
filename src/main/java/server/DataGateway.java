@@ -1,4 +1,6 @@
-package common;
+package server;
+
+import common.Logger;
 import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;

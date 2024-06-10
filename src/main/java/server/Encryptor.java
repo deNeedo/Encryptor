@@ -1,4 +1,9 @@
 package server;
+
+import common.Logger;
+import common.RequestCode;
+import common.Validator;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.StringReader;
 import java.net.InetSocketAddress;
@@ -7,25 +12,56 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Base64;
+import java.util.Properties;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-
-import common.CryptoGen;
-import common.DataGateway;
-import common.Logger;
-import common.RequestCode;
-import common.Validator;
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 
 public class Encryptor
 {
-    /* private boolean isRunning; */
     private WebSocketServer server;
+    private boolean initialized;
+    private String address;
+    private int port;
 
-    private Encryptor() {/* this.isRunning = true; */}
+    private Encryptor()
+    {
+        this.initialized = false; 
+        this.init();
+    }
+
+    private void init()
+    {
+        if (!this.initialized)
+        {
+            Properties prop = new Properties();
+            String path = "./config/server.config";
+            try (FileInputStream fis = new FileInputStream(path)) {prop.load(fis);}
+            catch (Exception e)
+            {
+                Logger.warning("Config file not found at default path.");
+                path = Logger.input("New path for config file: ");
+                try (FileInputStream fis = new FileInputStream(path)) {prop.load(fis);}
+                catch (Exception x) {return;}
+            }
+            this.address = prop.getProperty("server.address");
+            this.port = Integer.parseInt(prop.getProperty("server.port"));
+            this.initialized = true;         
+        }
+        else {Logger.warning("Already initialized");}
+    }
+
+    public static void main(String[] args)
+    {
+        Encryptor main = new Encryptor(); if (main.initialized) {DataGateway.init();} else {Logger.error("Server init error"); return;}
+        if (DataGateway.isReady()) {main.server = main.new Server(new InetSocketAddress(main.address, main.port));}
+        else {Logger.error("PostgreSQL init error"); return;}
+        Logger.info("Welcome to Encryptor Server " + Validator.checkVersion());
+        main.server.run();
+    }
 
     private static boolean login(String user, String pass)
     {
@@ -146,14 +182,6 @@ public class Encryptor
         }
         catch (Exception e) {e.printStackTrace(); return null;}
     }
-    public static void main(String[] args)
-    {
-        Encryptor main = new Encryptor(); DataGateway.init();
-        if (DataGateway.isReady()) {main.server = main.new Server(new InetSocketAddress("localhost", 8080));}
-        else {Logger.error("PostgreSQL init error"); return;}
-        Logger.info("Welcome to Encryptor Server " + Validator.checkVersion());
-        main.server.run();
-    }
 
     class Server extends WebSocketServer
     {
@@ -166,7 +194,7 @@ public class Encryptor
         @Override
         public void onClose(WebSocket conn, int code, String reason, boolean remote) {Logger.info("Closed connection to " + conn.getRemoteSocketAddress());}
         @Override
-        public void onError(WebSocket conn, Exception ex) {}
+        public void onError(WebSocket conn, Exception ex) {Logger.error("Server internal error");}
         @Override
         public void onMessage(WebSocket conn, String message)
         {
